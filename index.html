@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="layout">
+  <!-- Left Panel -->
+  <div class="left-panel">
+    <div class="panel-header">
+      <h2>Document Library</h2>
+      <button class="refresh-btn" onclick="loadDocuments()">Refresh</button>
+    </div>
+
+    <div class="drop-zone" id="dropZone"
+      onclick="document.getElementById('fileInput').click()"
+      ondragover="onDragOver(event)"
+      ondragleave="onDragLeave(event)"
+      ondrop="onDrop(event)">
+      <p>Drop PDF here or click to browse</p>
+    </div>
+    <input type="file" id="fileInput" accept=".pdf" onchange="onFileSelect(event)">
+
+    <div class="upload-progress" id="uploadProgress">
+      <div class="up-file" id="upFileName"></div>
+      <div class="up-bar"><div class="up-fill" id="upFill"></div></div>
+    </div>
+
+    <div class="doc-list" id="docList">
+      <div class="doc-list-empty">No documents yet.<br>Upload a PDF to get started.</div>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="right-panel">
+    <div class="chat-header">
+      <div class="chat-title">RAG<br><span>Pipeline</span></div>
+      <select class="doc-filter" id="docFilter" onchange="onFilterChange()">
+        <option value="">All Documents</option>
+      </select>
+      <button class="arch-btn" onclick="document.getElementById('archModal').classList.add('visible')">
+        View Architecture
+      </button>
+    </div>
+
+    <div class="chat-area" id="chatArea">
+      <div class="chat-empty" id="chatEmpty">Ask a question about your uploaded documents...</div>
+    </div>
+
+    <div class="chat-input-bar">
+      <textarea class="chat-input" id="chatInput" placeholder="Ask anything..." rows="1"
+        onkeydown="onInputKey(event)"
+        oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendQuery()">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- Architecture Modal -->
+<div class="modal-overlay" id="archModal" onclick="if(event.target===this)this.classList.remove('visible')">
+  <div class="modal">
+    <h3>Pipeline Architecture</h3>
+    <div class="arch-flow">
+      <div class="arch-step">
+        <div class="arch-num">1</div>
+        <div>
+          <p>PDF Upload → S3</p>
+          <span>Frontend gets presigned URL → PUT directly to S3 bucket</span>
+        </div>
+      </div>
+      <div class="arch-step">
+        <div class="arch-num">2</div>
+        <div>
+          <p>S3 Event → Lambda (Processor)</p>
+          <span>S3 trigger fires → extract text, chunk (500 words / 100 overlap)</span>
+        </div>
+      </div>
+      <div class="arch-step">
+        <div class="arch-num">3</div>
+        <div>
+          <p>OpenAI Embeddings</p>
+          <span>text-embedding-3-small → 1536-dim vectors per chunk</span>
+        </div>
+      </div>
+      <div class="arch-step">
+        <div class="arch-num">4</div>
+        <div>
+          <p>Pinecone Upsert + DynamoDB</p>
+          <span>Vectors stored in Pinecone · metadata in DynamoDB</span>
+        </div>
+      </div>
+      <div class="arch-step">
+        <div class="arch-num">5</div>
+        <div>
+          <p>Query → Lambda (Streamer)</p>
+          <span>Embed query → top-5 Pinecone matches → stream answer via Poe RAG bot</span>
+        </div>
+      </div>
+    </div>
+    <button class="modal-close" onclick="document.getElementById('archModal').classList.remove('visible')">Close</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
