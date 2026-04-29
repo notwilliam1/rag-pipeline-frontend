@@ -436,3 +436,14 @@ input[type=file] { display: none; }
     max-width: 90%;
   }
 }
+
+.chat-input-bar {
+  position: sticky;
+  bottom: 0;
+  background: var(--bg);
+  padding: 10px;
+}
+
+.right-panel {
+  height: 100vh;
+}
