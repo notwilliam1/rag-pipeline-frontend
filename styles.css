@@ -398,3 +398,41 @@ input[type=file] { display: none; }
   padding: 9px; cursor: pointer; transition: all 0.15s;
 }
 .modal-close:hover { border-color: var(--accent); color: var(--accent); }
+
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  .left-panel {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .doc-list {
+    max-height: 250px;
+  }
+
+  .right-panel {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .chat-title {
+    font-size: 14px;
+  }
+
+  .doc-filter {
+    max-width: 100%;
+  }
+
+  .arch-btn {
+    display: none;
+  }
+
+  .msg-bubble {
+    max-width: 90%;
+  }
+}
