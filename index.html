@@ -6,16 +6,38 @@
 <title>RAG Pipeline</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
+<!-- Auth Screen -->
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-title">RAG<span>Pipeline</span></div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+      <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+    </div>
+
+    <div id="authError" class="auth-error" style="display:none"></div>
+
+    <input class="auth-input" id="authEmail" type="email" placeholder="Email" />
+    <input class="auth-input" id="authPassword" type="password" placeholder="Password" />
+    <button class="auth-btn" id="authSubmitBtn" onclick="handleAuth()">Login</button>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="appScreen" style="display:none; height:100vh; display:none; flex-direction:column;">
 <div class="layout">
   <!-- Left Panel -->
   <div class="left-panel">
     <div class="panel-header">
       <h2>Document Library</h2>
-      <button class="refresh-btn" onclick="loadDocuments()">Refresh</button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="refresh-btn" onclick="loadDocuments()">Refresh</button>
+        <button class="refresh-btn" onclick="handleLogout()">Logout</button>
+      </div>
     </div>
 
     <div class="drop-zone" id="dropZone"
@@ -60,6 +82,7 @@
       <button class="send-btn" id="sendBtn" onclick="sendQuery()">Send</button>
     </div>
   </div>
+</div>
 </div>
 
 <!-- Architecture Modal -->
@@ -107,6 +130,6 @@
   </div>
 </div>
 
-<script src="app.js"></script>
+<script type="module" src="/src/main.js"></script>
 </body>
 </html>

@@ -1,26 +1,112 @@
-// aws endpoints - in production these would be injected via CI/CD environment variables
-const BASE_API = "https://vrldyxjw1j.execute-api.us-east-1.amazonaws.com/prod";
+import { createClient } from '@supabase/supabase-js'
+import './styles.css'
 
-const PRESIGN_URL = `${BASE_API}/presign`;
-const DYNAMO_URL  = `${BASE_API}/documents`;
-const QUERY_URL   = 'https://4xnclgu6rio3p4y5bax7bfysyi0fsbdw.lambda-url.us-east-1.on.aws/';
+const BASE_API          = 'https://vrldyxjw1j.execute-api.us-east-1.amazonaws.com/prod';
+const PRESIGN_URL       = `${BASE_API}/presign`;
+const DYNAMO_URL        = `${BASE_API}/documents`;
+const QUERY_URL         = import.meta.env.VITE_QUERY_URL;
+const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let documents    = [];
 let chatMessages = [];
 let selectedDoc  = '';
 let isQuerying   = false;
+let authMode     = 'login';
 
-window.addEventListener('DOMContentLoaded', loadDocuments);
+async function getHeaders() {
+  const { data: { session } } = await sb.auth.getSession();
+
+  if (!session) {
+    console.error("No session found — user not authenticated yet");
+    return {
+      'Content-Type': 'application/json'
+    };
+  }
+
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${session.access_token}`
+  };
+}
+
+function switchAuthTab(mode) {
+  authMode = mode;
+  document.querySelectorAll('.auth-tab').forEach((t, i) =>
+    t.classList.toggle('active', ['login','signup'][i] === mode)
+  );
+  document.getElementById('authSubmitBtn').textContent = mode === 'login' ? 'Login' : 'Sign Up';
+  document.getElementById('authError').style.display = 'none';
+}
+
+async function handleAuth() {
+  const email    = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const btn      = document.getElementById('authSubmitBtn');
+  const errEl    = document.getElementById('authError');
+
+  btn.disabled = true;
+  btn.textContent = 'Loading...';
+  errEl.style.display = 'none';
+
+  const { error } = authMode === 'login'
+    ? await sb.auth.signInWithPassword({ email, password })
+    : await sb.auth.signUp({ email, password });
+
+  if (error) {
+    errEl.textContent = error.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = authMode === 'login' ? 'Login' : 'Sign Up';
+  }
+}
+
+async function handleLogout() {
+  await sb.auth.signOut();
+}
+
+function showApp() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display  = 'flex';
+  loadDocuments();
+}
+
+function showAuth() {
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('appScreen').style.display  = 'none';
+  documents    = [];
+  chatMessages = [];
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const { data: { session } } = await sb.auth.getSession();
+
+  if (session) {
+    showApp();
+  } else {
+    showAuth();
+  }
+
+  sb.auth.onAuthStateChange((_event, session) => {
+    if (session) {
+      showApp();
+    } else {
+      showAuth();
+    }
+  });
+});
 
 function autoResize(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 }
 
-// load docs from dynamo
 async function loadDocuments() {
   try {
-    const res  = await fetch(DYNAMO_URL);
+    const res  = await fetch(DYNAMO_URL, { headers: await getHeaders() });
     const data = await res.json();
     documents  = Array.isArray(data) ? data : (data.items || data.documents || []);
     renderDocList();
@@ -84,7 +170,6 @@ function onFilterChange() {
   renderDocList();
 }
 
-// upload
 function onDragOver(e)  { e.preventDefault(); document.getElementById('dropZone').classList.add('drag'); }
 function onDragLeave(e) { document.getElementById('dropZone').classList.remove('drag'); }
 
@@ -101,6 +186,12 @@ function onFileSelect(e) {
 }
 
 async function uploadFile(file) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    alert("You must be logged in.");
+    return;
+  }
+
   if (documents.filter(d => d.status !== 'failed').length >= 15) {
     alert('Maximum 15 documents reached.');
     return;
@@ -114,14 +205,13 @@ async function uploadFile(file) {
   const fill  = document.getElementById('upFill');
   const fname = document.getElementById('upFileName');
   prog.classList.add('visible');
-  fname.textContent  = file.name;
-  fill.style.width   = '0%';
+  fname.textContent = file.name;
+  fill.style.width  = '0%';
 
   try {
-    // get presigned URL
     const presignRes = await fetch(PRESIGN_URL, {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await getHeaders(),
       body:    JSON.stringify({ fileName: file.name, contentType: 'application/pdf' })
     });
     if (!presignRes.ok) {
@@ -132,11 +222,7 @@ async function uploadFile(file) {
 
     fill.style.width = '40%';
 
-    // PUT to S3
-    await fetch(uploadUrl, {
-      method:  'PUT',
-      body:    file
-    });
+    await fetch(uploadUrl, { method: 'PUT', body: file });
 
     fill.style.width = '100%';
     setTimeout(() => {
@@ -148,7 +234,6 @@ async function uploadFile(file) {
         renderDocList();
         rebuildFilter();
       }
-      // refetch after Lambda has time to finish
       setTimeout(loadDocuments, 5000);
     }, 800);
   } catch(e) {
@@ -157,7 +242,6 @@ async function uploadFile(file) {
   }
 }
 
-// query
 function onInputKey(e) {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendQuery(); }
 }
@@ -176,7 +260,6 @@ async function sendQuery() {
   document.getElementById('chatEmpty')?.remove();
   appendMessage('user', q);
 
-  // status indicator
   const statusId = 'status-' + Date.now();
   const statusEl = document.createElement('div');
   statusEl.className = 'status-line';
@@ -196,9 +279,10 @@ async function sendQuery() {
   let answerBody    = null;
 
   try {
+    const headers = await getHeaders();
     const res = await fetch(QUERY_URL, {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body:    JSON.stringify(payload)
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -245,13 +329,11 @@ async function sendQuery() {
       }
     }
 
-    // flush buffer
     if (buffer && answerStarted && answerBody) {
       answerText += buffer;
       answerBody.textContent = answerText.trim();
     }
 
-    // render source chips
     if (sources.length && answerBody) {
       const srcRow = document.createElement('div');
       srcRow.className = 'sources-row';
@@ -290,3 +372,17 @@ function scrollToBottom() {
   const area = document.getElementById('chatArea');
   area.scrollTop = area.scrollHeight;
 }
+
+window.switchAuthTab = switchAuthTab;
+window.handleAuth    = handleAuth;
+window.handleLogout  = handleLogout;
+window.loadDocuments = loadDocuments;
+window.selectDoc     = selectDoc;
+window.onFilterChange = onFilterChange;
+window.onDragOver    = onDragOver;
+window.onDragLeave   = onDragLeave;
+window.onDrop        = onDrop;
+window.onFileSelect  = onFileSelect;
+window.onInputKey    = onInputKey;
+window.sendQuery     = sendQuery;
+window.autoResize    = autoResize;
