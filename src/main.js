@@ -407,3 +407,4 @@ window.onFileSelect  = onFileSelect;
 window.onInputKey    = onInputKey;
 window.sendQuery     = sendQuery;
 window.autoResize    = autoResize;
+window.handleGuestLogin = handleGuestLogin;
