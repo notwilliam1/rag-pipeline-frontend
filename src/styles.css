@@ -1034,6 +1034,15 @@ input[type=file] { display: none; }
 }
 .modal-close:hover { border-color: var(--border-hi); color: var(--text-primary); }
 
+.doc-select-hint {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 6px 2px 4px;
+  letter-spacing: 0.2px;
+  text-align: center;
+}
+
 @media (max-width: 768px) {
   .layout { flex-direction: column; }
   .left-panel { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); }

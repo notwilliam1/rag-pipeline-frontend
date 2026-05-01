@@ -310,6 +310,8 @@ function updateScopePill() {
   const pill  = document.getElementById('scopePill');
   const label = document.getElementById('scopeLabel');
   const dot   = pill?.querySelector('.scope-dot');
+  const hint = document.getElementById('docSelectHint');
+  
   if (!pill || !label) return;
   if (selectedDoc) {
     label.textContent = selectedDoc.length > 18 ? selectedDoc.slice(0, 16) + '…' : selectedDoc;
