@@ -84,12 +84,14 @@ async function handleLogout() {
 
 function showApp(session) {
   document.getElementById('authScreen').style.display = 'none';
-  document.getElementById('appScreen').style.display  = 'flex';
+  const appEl = document.getElementById('appScreen');
+  if (appEl) appEl.style.display = 'flex';
 
   if (isGuest(session)) {
-    document.getElementById('guestBanner').style.display = 'block';
-    document.getElementById('dropZone').style.display    = 'none';
-    document.getElementById('fileInput').style.display   = 'none';
+    // Use the optional chaining operator (?.) to prevent crashes if the element is null
+    document.getElementById('guestBanner')?.style.setProperty('display', 'block');
+    document.getElementById('dropZone')?.style.setProperty('display', 'none');
+    document.getElementById('fileInput')?.style.setProperty('display', 'none');
   }
 
   loadDocuments();
@@ -98,6 +100,19 @@ function showApp(session) {
 function showAuth() {
   document.getElementById('authScreen').style.display = 'flex';
   document.getElementById('appScreen').style.display  = 'none';
+
+  const guestBtn = document.getElementById('guestBtn');
+  if (guestBtn) {
+    guestBtn.textContent = 'Try as Guest — no account needed';
+    guestBtn.disabled = false;
+  }
+
+  const authBtn = document.getElementById('authSubmitBtn');
+  if (authBtn) {
+    authBtn.disabled = false;
+    authBtn.textContent = authMode === 'login' ? 'Login' : 'Sign Up';
+  }
+
   documents    = [];
   chatMessages = [];
 }
