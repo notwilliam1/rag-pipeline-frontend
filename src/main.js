@@ -88,10 +88,9 @@ function showApp(session) {
   if (appEl) appEl.style.display = 'flex';
 
   if (isGuest(session)) {
-    // Use the optional chaining operator (?.) to prevent crashes if the element is null
     document.getElementById('guestBanner')?.style.setProperty('display', 'block');
-    //document.getElementById('dropZone')?.style.setProperty('display', 'none');
-    //document.getElementById('fileInput')?.style.setProperty('display', 'none');
+    document.getElementById('dropZone')?.style.setProperty('display', 'none');
+    document.getElementById('fileInput')?.style.setProperty('display', 'none');
   }
 
   loadDocuments();
