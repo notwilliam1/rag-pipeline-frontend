@@ -509,7 +509,7 @@ input[type=file] { display: none; }
   background: var(--bg-panel);
   gap: 16px;
 }
-.hero-left {}
+
 .hero-title {
   font-family: var(--serif);
   font-size: 16px;

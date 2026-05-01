@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import './styles.css'
 
-/* ── Config ── */
 const BASE_API          = 'https://vrldyxjw1j.execute-api.us-east-1.amazonaws.com/prod';
 const PRESIGN_URL       = `${BASE_API}/presign`;
 const DYNAMO_URL        = `${BASE_API}/documents`;
@@ -13,7 +12,6 @@ const GUEST_EMAIL    = 'guest@demo.com';
 const GUEST_PASSWORD = 'guestdemo123';
 
 
-/* ── State ── */
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let documents    = [];
@@ -24,9 +22,7 @@ let authMode     = 'login';          // for legacy auth screen
 let sheetAuthMode = 'login';         // for bottom sheet
 let _currentSession = null;
 
-/* ══════════════════════════════════════════
-   AUTH HELPERS
-   ══════════════════════════════════════════ */
+
 
 function isGuest(session) {
   return session?.user?.email === GUEST_EMAIL;
@@ -41,7 +37,6 @@ async function getHeaders() {
   };
 }
 
-/* Legacy auth screen (only shown on first visit with no session) */
 function switchAuthTab(mode) {
   authMode = mode;
   document.querySelectorAll('#authScreen .auth-tab').forEach((t, i) =>
@@ -73,7 +68,6 @@ async function handleAuth() {
   }
 }
 
-/* Bottom sheet auth */
 function switchSheetTab(mode) {
   sheetAuthMode = mode;
   document.getElementById('sheetTabLogin').classList.toggle('active', mode === 'login');
@@ -106,7 +100,6 @@ async function handleSheetAuth() {
   }
 }
 
-/* Guest login — from legacy screen */
 async function handleGuestLogin() {
   const btn = document.getElementById('guestBtn');
   btn.textContent = 'Loading...';
@@ -118,7 +111,6 @@ async function handleLogout() {
   await sb.auth.signOut();
 }
 
-/* ── Sheet open/close ── */
 function openAuthSheet() {
   document.getElementById('sheetOverlay').classList.add('open');
 }
@@ -132,7 +124,6 @@ function closeSheetOnly() {
   document.getElementById('sheetOverlay').classList.remove('open');
 }
 
-/* Guest continues from sheet — signs in as guest */
 async function closeSheetAsGuest() {
   closeSheetOnly();
   // If not already signed in as guest, sign in
@@ -142,9 +133,7 @@ async function closeSheetAsGuest() {
   }
 }
 
-/* ══════════════════════════════════════════
-   APP INIT
-   ══════════════════════════════════════════ */
+
 
 window.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await sb.auth.getSession();
@@ -152,7 +141,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (session) {
     showApp(session);
   } else {
-    /* NEW FLOW: show app directly, auto-sign-in as guest silently */
     await silentGuestSignIn();
   }
 
@@ -161,7 +149,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (session) {
       showApp(session);
     } else {
-      /* On sign-out: try guest again */
       silentGuestSignIn();
     }
   });
@@ -173,10 +160,8 @@ async function silentGuestSignIn() {
     password: GUEST_PASSWORD
   });
   if (error) {
-    /* Fallback: show legacy auth screen if guest account doesn't exist */
     showLegacyAuth();
   }
-  /* onAuthStateChange will call showApp once signed in */
 }
 
 function showLegacyAuth() {
@@ -191,11 +176,9 @@ function showApp(session) {
 
   const guest = isGuest(session);
 
-  /* Guest banner */
   const banner = document.getElementById('guestBanner');
   if (banner) banner.style.display = guest ? 'block' : 'none';
 
-  /* Upload zone behavior */
   const dropZone = document.getElementById('dropZone');
   const guestNotice = document.getElementById('guestUploadNotice');
   const fileInput = document.getElementById('fileInput');
@@ -208,11 +191,9 @@ function showApp(session) {
     }
   }
 
-  /* Top-right sign-up button — hide if not guest */
   const signupBtn = document.querySelector('.topbar-btn');
   if (signupBtn) signupBtn.style.display = guest ? 'block' : 'none';
 
-  /* Login button — same treatment as signup */
   const loginBtn = document.querySelector('.topbar-login-btn');
   if (loginBtn) loginBtn.style.display = guest ? 'inline-flex' : 'none';
 
@@ -232,11 +213,6 @@ function showApp(session) {
   loadDocuments();
 }
 
-/* ══════════════════════════════════════════
-   UPLOAD CLICK ROUTING
-   If guest → open auth sheet
-   If authed → trigger file picker
-   ══════════════════════════════════════════ */
 async function handleUploadClick() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session || isGuest(session)) {
@@ -246,9 +222,6 @@ async function handleUploadClick() {
   document.getElementById('fileInput').click();
 }
 
-/* ══════════════════════════════════════════
-   DOCUMENTS
-   ══════════════════════════════════════════ */
 
 async function loadDocuments() {
   try {
@@ -319,7 +292,6 @@ function onFilterChange() {
 }
 
 function cycleScopeFilter() {
-  /* Clicking the pill cycles: All → first doc → All */
   const readyDocs = documents.filter(d => d.status === 'ready');
   if (!readyDocs.length) return;
   if (!selectedDoc) {
@@ -348,9 +320,6 @@ function updateScopePill() {
   }
 }
 
-/* ══════════════════════════════════════════
-   PIPELINE STEP INDICATORS
-   ══════════════════════════════════════════ */
 
 function setPipelineStep(step) {
   // step: 0 = reset all, 1-5 = light up through that step
@@ -367,9 +336,6 @@ function resetPipelineSteps() {
   setPipelineStep(0);
 }
 
-/* ══════════════════════════════════════════
-   FILE UPLOAD
-   ══════════════════════════════════════════ */
 
 function onDragOver(e)  {
   e.preventDefault();
@@ -458,11 +424,7 @@ async function uploadFile(file) {
   }
 }
 
-/* ══════════════════════════════════════════
-   CHAT / QUERY
-   ══════════════════════════════════════════ */
 
-/* Demo CTA fires this pre-filled query */
 function runDemoQuery() {
   const input = document.getElementById('chatInput');
   input.value = DEMO_QUERY;
@@ -470,7 +432,6 @@ function runDemoQuery() {
   sendQuery();
 }
 
-/* Suggestion card click */
 function sendSuggestedQuery(el) {
   const q = el.querySelector('.sug-q')?.textContent?.trim();
   if (!q) return;
@@ -494,13 +455,11 @@ async function sendQuery() {
   document.getElementById('sendBtn').disabled = true;
   resetPipelineSteps();
 
-  /* Remove empty state / suggestion cards */
   const empty = document.getElementById('chatEmpty');
   if (empty) empty.remove();
 
   appendMessage('user', q);
 
-  /* Thinking status */
   const statusId = 'status-' + Date.now();
   const statusEl = document.createElement('div');
   statusEl.className = 'status-line';
@@ -622,9 +581,6 @@ function autoResize(el) {
   el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 }
 
-/* ══════════════════════════════════════════
-   GLOBALS (called from HTML onclick attrs)
-   ══════════════════════════════════════════ */
 window.switchAuthTab     = switchAuthTab;
 window.handleAuth        = handleAuth;
 window.handleGuestLogin  = handleGuestLogin;
