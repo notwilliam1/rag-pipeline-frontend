@@ -8,6 +8,9 @@ const QUERY_URL         = import.meta.env.VITE_QUERY_URL;
 const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+const GUEST_EMAIL    = 'guest@demo.com';
+const GUEST_PASSWORD = 'guestdemo123';
+
 
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -16,6 +19,17 @@ let chatMessages = [];
 let selectedDoc  = '';
 let isQuerying   = false;
 let authMode     = 'login';
+
+async function handleGuestLogin() {
+  const btn = document.getElementById('guestBtn');
+  btn.textContent = 'Loading...';
+  btn.disabled = true;
+  await sb.auth.signInWithPassword({ email: GUEST_EMAIL, password: GUEST_PASSWORD });
+}
+
+function isGuest(session) {
+  return session?.user?.email === GUEST_EMAIL;
+}
 
 async function getHeaders() {
   const { data: { session } } = await sb.auth.getSession();
@@ -68,9 +82,16 @@ async function handleLogout() {
   await sb.auth.signOut();
 }
 
-function showApp() {
+function showApp(session) {
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('appScreen').style.display  = 'flex';
+
+  if (isGuest(session)) {
+    document.getElementById('guestBanner').style.display = 'block';
+    document.getElementById('dropZone').style.display    = 'none';
+    document.getElementById('fileInput').style.display   = 'none';
+  }
+
   loadDocuments();
 }
 
@@ -85,14 +106,14 @@ window.addEventListener('DOMContentLoaded', async () => {
   const { data: { session } } = await sb.auth.getSession();
 
   if (session) {
-    showApp();
+    showApp(session);
   } else {
     showAuth();
   }
 
   sb.auth.onAuthStateChange((_event, session) => {
     if (session) {
-      showApp();
+      showApp(session);
     } else {
       showAuth();
     }

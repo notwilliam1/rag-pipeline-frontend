@@ -9,10 +9,12 @@
 </head>
 <body>
 
-<!-- Auth Screen -->
 <div id="authScreen" class="auth-screen">
   <div class="auth-card">
     <div class="auth-title">RAG<span>Pipeline</span></div>
+    <button class="guest-btn" id="guestBtn" onclick="handleGuestLogin()">
+      Try as Guest — no account needed
+    </button>
 
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
@@ -27,10 +29,8 @@
   </div>
 </div>
 
-<!-- Main App -->
 <div id="appScreen" style="display:none; height:100vh; display:none; flex-direction:column;">
 <div class="layout">
-  <!-- Left Panel -->
   <div class="left-panel">
     <div class="panel-header">
       <h2>Document Library</h2>
@@ -59,7 +59,6 @@
     </div>
   </div>
 
-  <!-- Right Panel -->
   <div class="right-panel">
     <div class="chat-header">
       <div class="chat-title">RAG<br><span>Pipeline</span></div>
@@ -85,7 +84,6 @@
 </div>
 </div>
 
-<!-- Architecture Modal -->
 <div class="modal-overlay" id="archModal" onclick="if(event.target===this)this.classList.remove('visible')">
   <div class="modal">
     <h3>Pipeline Architecture</h3>
