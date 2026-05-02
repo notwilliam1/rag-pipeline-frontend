@@ -39,11 +39,17 @@ body {
   color: var(--text-primary);
   font-family: var(--sans);
   height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
+}
+
+#appScreen {
+  height: 100vh;
+  height: 100dvh;
 }
 
 
@@ -1044,16 +1050,25 @@ input[type=file] { display: none; }
 }
 
 @media (max-width: 768px) {
-  .layout { flex-direction: column; }
-  .left-panel { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
-  .doc-list { max-height: 220px; }
-  .right-panel { flex: 1; min-height: 0; }
+  .layout { flex-direction: column; overflow: hidden; }
+  .left-panel {
+    width: 100%;
+    max-height: 36vh;
+    max-height: 36dvh;
+    overflow-y: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .doc-list { max-height: 160px; }
+  .credit-bar { display: none; }
+  .right-panel { flex: 1; min-height: 0; overflow: hidden; }
   .hero-bar { flex-wrap: wrap; gap: 10px; padding: 12px 14px; }
   .hero-right { width: 100%; justify-content: space-between; }
   .pipeline-strip { padding: 0 14px; }
   .pipe-step span { display: none; }
   .msg-bubble { max-width: 88%; }
-  .chat-input-bar { padding: 10px; }
+  .chat-input-bar { padding: 10px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
   .scope-pill { display: none; }
   .suggestions { grid-template-columns: 1fr; }
 }
